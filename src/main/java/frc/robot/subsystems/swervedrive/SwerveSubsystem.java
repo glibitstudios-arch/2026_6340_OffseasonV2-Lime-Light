@@ -15,6 +15,7 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 //import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
@@ -47,6 +48,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
+import frc.robot.LimelightHelpers;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -194,7 +197,27 @@ public class SwerveSubsystem extends SubsystemBase
   @Override
   public void periodic()
   {
+    // Tell the Limelight our current heading — MegaTag2 uses this
+    // to fuse gyro + tag detections into a more stable pose.
+    LimelightHelpers.SetRobotOrientation(
+        "limelight",
+        getPose().getRotation().getDegrees(),
+        0, 0, 0, 0, 0
+    );
 
+    LimelightHelpers.PoseEstimate visionEstimate =
+        LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+
+    // Only trust it when a tag was actually seen this frame
+    if (visionEstimate != null && visionEstimate.tagCount > 0)
+    {
+        swerveDrive.addVisionMeasurement(visionEstimate.pose, visionEstimate.timestampSeconds);
+    }
+
+    // Put it on the dashboard so you can watch it work
+    SmartDashboard.putNumber("Robot X", getPose().getX());
+    SmartDashboard.putNumber("Robot Y", getPose().getY());
+    SmartDashboard.putNumber("Robot Rotation (deg)", getPose().getRotation().getDegrees());
   }
 
 
