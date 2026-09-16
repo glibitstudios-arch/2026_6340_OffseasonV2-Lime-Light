@@ -18,6 +18,18 @@ import edu.wpi.first.math.util.Units;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  //Meters
+  public static final double NEAR_DISTANCE = 0;
+  public static final double MID_DISTANCE  = 0;
+  public static final double FAR_DISTANCE  = 0;
+  //Motor rotations
+  public static final double NEAR_HOOD_POS = 0;
+  public static final double MID_HOOD_POS  = 0;
+  public static final double FAR_HOOD_POS  = 0;
+
+  public static final double NEAR_SHOOTER_VELOCITY = 0;
+  public static final double MID_SHOOTER_VELOCITY  = 0;
+  public static final double FAR_SHOOTER_VELOCITY  = 0;
 
   public static class OperatorConstants
   {

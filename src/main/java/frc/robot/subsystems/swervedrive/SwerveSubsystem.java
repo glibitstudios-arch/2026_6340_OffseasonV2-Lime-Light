@@ -194,55 +194,37 @@ public class SwerveSubsystem extends SubsystemBase
     poseRot.append(pose.getRotation().getRadians());
   }
 
-  @Override
-  public void periodic() 
-  {
-    //Send gyro heading to Limelight for MegaTag2
-    LimelightHelpers.SetRobotOrientation(
-        "limelight",
-        getPose().getRotation().getDegrees(),
-        0, 0, 0, 0, 0
-    );
+@Override
+public void periodic() {
 
-    //Get MegaTag2 Pose Estimate
-    LimelightHelpers.PoseEstimate visionEstimate = 
-    LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+}
 
-    // 3. Process vision data if tags are visible
-    if (visionEstimate != null && visionEstimate.tagCount > 0) 
-    {
-      double avgDistance = visionEstimate.avgTagDist;
+@Override
+public void simulationPeriodic(){
 
-      // Ignore Tags from to far awway
-      if (avgDistance < 4.5) 
-      {
+}
 
-        //The closer the tag the more it is trusted
-        double xyStdDev = 0.1 * Math.pow(avgDistance, 2);
+public edu.wpi.first.math.geometry.Translation2d getHub() {
+    var alliance = edu.wpi.first.wpilibj.DriverStation.getAlliance();
+    return (alliance.isPresent() && alliance.get() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) 
+        ? Constants.FieldConstants.HUB_POSITION_RED : Constants.FieldConstants.HUB_POSITION_BLUE;
+}
 
-        // We set heading std dev to 999999 because MegaTag2 relies on our NavX gyro for heading,
-        // so we DO NOT want the pose estimator trying to correct gyro heading from vision.
-        swerveDrive.addVisionMeasurement(
-        visionEstimate.pose,
-        visionEstimate.timestampSeconds,
-        edu.wpi.first.math.VecBuilder.fill(xyStdDev, xyStdDev, 999999.0)
-        );
-      }
+public double getAimError() {
+    if (LimelightHelpers.getTV("limelight")) return -LimelightHelpers.getTX("limelight");
+    
+    double targetAngle = Math.toDegrees(Math.atan2(getHub().getY() - getPose().getY(), getHub().getX() - getPose().getX())) + 180.0;
+    return Math.IEEEremainder(targetAngle - getPose().getRotation().getDegrees(), 360.0);
+}
+
+public double getAimDistance() {
+    if (LimelightHelpers.getTV("limelight")) {
+        double[] camPose = LimelightHelpers.getBotPose_TargetSpace("limelight");
+        if (camPose != null && camPose.length >= 3) return Math.hypot(camPose[0], camPose[2]);
     }
-    // Put it on the dashboard so you can watch it work
-    SmartDashboard.putNumber("Robot X", getPose().getX());
-    SmartDashboard.putNumber("Robot Y", getPose().getY());
-    SmartDashboard.putNumber("Robot Rotation (deg)", getPose().getRotation().getDegrees());
-  }
-
-
-  @Override
-  public void simulationPeriodic()
-  {
-  }
-
-
- 
+    
+    return getPose().getTranslation().getDistance(getHub());
+}
 
   /**
    * Get the path follower with events.

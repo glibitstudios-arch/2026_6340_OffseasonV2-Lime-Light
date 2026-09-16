@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.commands.AutoAimCommand
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -146,6 +147,16 @@ public class RobotContainer {
     NamedCommands.registerCommand("Start Indexer", launcherSubsystem.startIndexerAndFloorCommand());
     NamedCommands.registerCommand("Stop Indexer", launcherSubsystem.stopIndexerAndFloorCommand());
 
+    NamedCommands.registerCommand("Auto Aim", 
+        new AutoAimCommand(
+            drivebase, 
+            launcherSubsystem, 
+            () -> 0.0, 
+            () -> 0.0, 
+            () -> 0.0
+        )
+    );
+
 
     //launcherSubsystem = new LauncherSubsystem();
     // add auto options to SmartDashboard
@@ -255,6 +266,15 @@ public class RobotContainer {
     driverXbox.povRight().onTrue(launcherSubsystem.setHoodPositionCommand(35)); // Mid Deploy
     driverXbox.povDown().onTrue(launcherSubsystem.setHoodPositionCommand(2)); // All the way down
 
+  driverXbox.x().whileTrue(
+      new AutoAimCommand(
+          drivebase,
+          launcherSubsystem,
+          () -> -driverXbox.getLeftY(),
+          () -> -driverXbox.getLeftX(),
+          () -> -driverXbox.getRightX()
+      )
+  );
 
     // Pivot Speed for Test
     //driverXbox.y().whileTrue(intakeSubsystem.setIntakePivotSpeedCommand(Constants.IntakeConstants.PIVOT_SPEED));
