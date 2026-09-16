@@ -195,25 +195,40 @@ public class SwerveSubsystem extends SubsystemBase
   }
 
   @Override
-  public void periodic()
+  public void periodic() 
   {
-    // Tell the Limelight our current heading — MegaTag2 uses this
-    // to fuse gyro + tag detections into a more stable pose.
+    //Send gyro heading to Limelight for MegaTag2
     LimelightHelpers.SetRobotOrientation(
         "limelight",
         getPose().getRotation().getDegrees(),
         0, 0, 0, 0, 0
     );
 
-    LimelightHelpers.PoseEstimate visionEstimate =
-        LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+    //Get MegaTag2 Pose Estimate
+    LimelightHelpers.PoseEstimate visionEstimate = 
+    LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
 
-    // Only trust it when a tag was actually seen this frame
-    if (visionEstimate != null && visionEstimate.tagCount > 0)
+    // 3. Process vision data if tags are visible
+    if (visionEstimate != null && visionEstimate.tagCount > 0) 
     {
-        swerveDrive.addVisionMeasurement(visionEstimate.pose, visionEstimate.timestampSeconds);
-    }
+      double avgDistance = visionEstimate.avgTagDist;
 
+      // Ignore Tags from to far awway
+      if (avgDistance < 4.5) 
+      {
+
+        //The closer the tag the more it is trusted
+        double xyStdDev = 0.1 * Math.pow(avgDistance, 2);
+
+        // We set heading std dev to 999999 because MegaTag2 relies on our NavX gyro for heading,
+        // so we DO NOT want the pose estimator trying to correct gyro heading from vision.
+        swerveDrive.addVisionMeasurement(
+        visionEstimate.pose,
+        visionEstimate.timestampSeconds,
+        edu.wpi.first.math.VecBuilder.fill(xyStdDev, xyStdDev, 999999.0)
+        );
+      }
+    }
     // Put it on the dashboard so you can watch it work
     SmartDashboard.putNumber("Robot X", getPose().getX());
     SmartDashboard.putNumber("Robot Y", getPose().getY());
